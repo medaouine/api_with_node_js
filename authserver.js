@@ -17,13 +17,6 @@ app.use(cors({
 
 
 
-
-
-
-
-
-
-
 app.use(express.json());
 
 app.post('/register', async (req, res) => {
@@ -39,13 +32,13 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
   
-    const result = await pool.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role', [name, email, hashedPassword, 'user']);
+    const result = await pool.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role', [name, email, hashedPassword, 'admin']);
     
     const { id, name: userName, email: userEmail, role } = result.rows[0];
 
    
-    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1h' }); 
+    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
+    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' }); 
 
    
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
@@ -85,8 +78,8 @@ app.post('/registeradmin', async (req, res) => {
     const { id, role } = result.rows[0];
 
    
-    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1h' }); // 
+    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
+    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' }); // 
 
  
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
@@ -122,8 +115,8 @@ app.post('/login', async (req, res) => {
     }
 
   
-    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1m' });
-    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1h' }); // 
+    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
+    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' }); // 
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
     
     await pool.query('INSERT INTO tokens (user_id, access_token, refresh_token, expires_at) VALUES ($1, $2, $3, $4)', [id, accessToken, refreshToken, expiresAt]);

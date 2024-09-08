@@ -20,11 +20,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
-
-
-
-
-
 router.post('/addproduct', upload.single('image'), async (req, res) => {
   const { name, description, price, quantity } = req.body;
   const image = req.file ? `/images/${req.file.filename}` : null;
@@ -34,10 +29,19 @@ router.post('/addproduct', upload.single('image'), async (req, res) => {
       'INSERT INTO products (name, description, price, image, quantity) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [name, description, price, image, quantity]
     );
-    res.status(201).json(result.rows[0]);
+    
+ 
+    res.status(201).json({
+      message: 'Product created successfully',
+      product: result.rows[0]
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error creating product');
+    
+  
+    res.status(500).json({
+      message: 'Error creating product'
+    });
   }
 });
 
@@ -67,13 +71,21 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).send('Product not found');
+      return res.status(404).json({
+        message: 'Product not found'
+      });
     }
 
-    res.json(result.rows[0]);
+ 
+    res.status(200).json({
+      message: 'Product updated successfully',
+      product: result.rows[0]
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Error updating product');
+    res.status(500).json({
+      message: 'Error updating product'
+    });
   }
 });
 
@@ -97,13 +109,6 @@ router.get('/products/:id', async (req, res) => {
     res.status(500).send('Error fetching product');
   }
 });
-
-
-
-
-
-
-
 
 
 

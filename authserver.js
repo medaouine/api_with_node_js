@@ -32,13 +32,13 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
   
-    const result = await pool.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role', [name, email, hashedPassword, 'admin']);
+    const result = await pool.query('INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role', [name, email, hashedPassword, 'user']);
     
     const { id, name: userName, email: userEmail, role } = result.rows[0];
 
    
-    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
-    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' }); 
+    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "5m" });
+    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '2h' }); 
 
    
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
@@ -57,9 +57,6 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Error registering user' });
   }
 });
-
-
-
 
 app.post('/registeradmin', async (req, res) => {
   const { name, email, password } = req.body;
@@ -115,8 +112,8 @@ app.post('/login', async (req, res) => {
     }
 
   
-    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
-    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' }); // 
+    const accessToken = jwt.sign({ id, role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "5m" });
+    const refreshToken = jwt.sign({ id, role }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "4h" }); 
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
     
     await pool.query('INSERT INTO tokens (user_id, access_token, refresh_token, expires_at) VALUES ($1, $2, $3, $4)', [id, accessToken, refreshToken, expiresAt]);
@@ -133,13 +130,11 @@ app.post('/login', async (req, res) => {
   }
 });
 
-
-
-
 app.delete('/logout', async (req, res) => {
 
  const { token } = req.body;
-
+ //const token = req.headers['authorization']?.split(' ')[1];
+  //if (!token) return res.status(401).send('Unauthorized');
 
   console.log ("token received from front end " ,token )
   if (!token) return res.sendStatus(401);
@@ -176,10 +171,6 @@ app.delete('/logout', async (req, res) => {
 
 
 
-
-
-
-
 app.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
@@ -189,14 +180,14 @@ app.post('/forgot-password', async (req, res) => {
     const userId = result.rows[0].id;
 
     const resetToken = crypto.randomBytes(20).toString('hex');
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); 
     await pool.query('INSERT INTO password_reset_tokens (user_id, reset_token, expires_at) VALUES ($1, $2, $3)', [userId, resetToken, expiresAt]);
 
 
 
 
 
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:5173/resetpassword?token=${resetToken}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -273,7 +264,7 @@ app.post('/token', async (req, res) => {
       }
 
      
-      const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+      const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 40 });
       res.status(201).json({ accessToken });
     });
   } catch (error) {
